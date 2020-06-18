@@ -1,0 +1,126 @@
+#logging
+logging:
+  path: /srv/tomcat/kill/logs
+  file: kill
+  level: info
+
+#spring
+#mvc
+spring:
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+# !!!
+  http:
+    multipart:
+      max-request-size: 20Mb
+      max-file-size: 10Mb
+  # json序列化配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  jmx:
+    enabled: false
+
+  datasource:
+    initialize: false
+    url: jdbc:mysql://localhost:3306/db_second_kill?useSSL=FALSE&&serverTimezone=GMT%2B8&&characterEncoding=UTF-8
+    username: root
+    password: 932567
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  redis:
+    host: 192.168.199.132
+    port: 6375
+
+  # rabbitmq
+  rabbitmq:
+    virtual-host: /
+    host: 192.168.199.132
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 15
+        prefetch: 10
+
+  mail:
+    host: smtp.qq.com
+    username: 1752228274@qq.com
+    password: ioidwotlrdkpcgii
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+
+mail:
+  send:
+    from: 1752228274@qq.com
+  kill:
+    item:
+      success:
+        subject: 商品抢购成功
+        content: '您好，您已成功抢购到商品: <strong style="color: red">%s</strong> ，复制该链接并在浏览器采用新的页面打开，即可查看抢购详情：${system.domain.url}/kill/record/detail/%s，并请您在1个小时内完成订单的支付，超时将失效该订单哦！祝你生活愉快！'
+
+# 自己写的
+# 秒杀成功异步发送邮件的消息队列
+mq:
+  env: test
+  kill:
+    item:
+      success:
+        # 邮件
+        email:
+          queue: ${mq.env}.kill.item.success.email.queue
+          exchange: ${mq.env}.kill.item.success.email.exchange
+          routing:
+            key: ${mq.env}.kill.item.success.email.routing.key
+        # 订单超时未支付自动失效-死信队列
+        kill:
+          # TTL
+          expire: 300000
+          # 死信队列,交换机，路由
+          dead:
+            queue: ${mq.env}.kill.item.success.kill.dead.queue
+            prod:
+              exchange: ${mq.env}.kill.item.success.kill.dead.prod.exchange
+              key: ${mq.env}.kill.item.success.kill.dead.prod.key
+            # 真正队列，真正交换机和路由
+            real:
+              queue: ${mq.env}.kill.item.success.kill.dead.real.queue
+            exchange: ${mq.env}.kill.item.success.kill.dead.exchange
+            routing:
+              key: ${mq.env}.kill.item.success.kill.dead.routing.key
+
+
+
+
+
+# redisson: 自己写的
+redis:
+  config:
+    host: redis://192.168.199.132:6375
+
+# mybatis
+mybatis:
+  config-location: classpath:mybatis-config.xml
+  check-config-location: true
+  mapper-locations: classpath:mappers/*.xml
+
+zk:
+  host: 192.168.199.132:2181
+  namespace: kill
+
+system:
+  domain:
+    url: http://localhost:8080/kill
+
+  shiro-password-salt: e7e16e4cd293461b8c924984ad1b6a5b
